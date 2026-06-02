@@ -101,23 +101,6 @@ def show_preview(sobtot_output):
     cv.destroyAllWindows()
 
 
-# check if a valid filename is given
-try:
-   i = cv.imread(sys.argv[1])
-   hig, wid, _ = i.shape
-except:
-    print("Error: image does not exist")
-    sys.exit(1)
-
-k = 3 # the 'k' value for the sobel filter. default of 3
-mode = 'min' # can choose to minimize or maximize RGB. default of min
-shrinkage = 3 # amount of pixelization averaging. default of 3x3 area
-scale = 1 # scale of the sobel transform (edge "brightness" in output)
-
-if len(sys.argv) > 2: # if we have a second arg, it should be k
-    k = int(sys.argv[2])
-    if k%2 == 0:
-        print("Error: k must be odd.")
 def get_unique_filename(file_path: str, digits: int = 3) -> str:
     """
     Generates a unique file path by appending an incrementing counter
