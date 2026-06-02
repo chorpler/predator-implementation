@@ -46,6 +46,17 @@ def sobel(i, k, s):
     # likely due to floating-point rounding errors
     sobtot = cv.addWeighted(abSobx, 0.5, abSoby, 0.5, 0)
     cv.imshow('output', sobtot)
+
+# def save_and_preview(sobtot_output, unique_output_file):
+def save_and_preview(cv_data, pil_data, png_metadata, unique_output_file):
+    if unique_output_file:
+        pil_data.save(unique_output_file, pnginfo=png_metadata)
+        # cv.imwrite(unique_output_file, sobtot_output)
+    show_preview(cv_data)
+
+
+def show_preview(sobtot_output):
+    cv.imshow(f"Preview", sobtot_output)
     cv.waitKey(0)
     cv.destroyAllWindows()
 
