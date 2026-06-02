@@ -45,7 +45,47 @@ def sobel(i, k, s):
     # the more precise methods produced far less consistent output,
     # likely due to floating-point rounding errors
     sobtot = cv.addWeighted(abSobx, 0.5, abSoby, 0.5, 0)
-    cv.imshow('output', sobtot)
+    return sobtot
+
+
+# def thermalize(input_file, output_file, k=3, scale=1, mode="min", shrinkage=3, auto_output=False, debug=False):
+def add_image_metadata(input_file: str, image_data, val_k: int, val_scale: int, val_mode: str, val_shrinkage: int):
+    try:
+        src_image = Image.open(input_file)
+        existing_metadata = src_image.info
+
+        rgb_img = cv.cvtColor(image_data, cv.COLOR_BGR2RGB)
+        pil_img = Image.fromarray(rgb_img)
+
+        predator_info = {
+            "k": val_k,
+            "scale": val_scale,
+            "mode": val_mode,
+            "shrinkage": val_shrinkage
+        }
+        predator_info_json = json.dumps(predator_info)
+
+        new_png_info = PngInfo()
+        for key, value in existing_metadata.items():
+            # Filter out internal properties that PIL handles automatically
+            if isinstance(value, str):
+                new_png_info.add_text(key, value)
+
+        new_png_info.add_text("PredatorInfo", predator_info_json)
+
+        return pil_img, new_png_info
+
+    #     exif_bytes = piexif.dump(piexif.load(input_file))
+    #
+    #     success, encoded_img = cv.imencode('.png', image_data)
+    #     if success:
+    #         image_with_exif = piexif.insert(exif_bytes, encoded_img.tobytes())
+    #         return image_with_exif
+    except Exception as e:
+        print(f"add_image_metadata error while saving metadata: {e}\n{traceback.format_exc()}", file=sys.stderr)
+        sys.exit(1)
+
+
 
 # def save_and_preview(sobtot_output, unique_output_file):
 def save_and_preview(cv_data, pil_data, png_metadata, unique_output_file):
@@ -78,6 +118,29 @@ if len(sys.argv) > 2: # if we have a second arg, it should be k
     k = int(sys.argv[2])
     if k%2 == 0:
         print("Error: k must be odd.")
+def get_unique_filename(file_path: str, digits: int = 3) -> str:
+    """
+    Generates a unique file path by appending an incrementing counter
+    (e.g., '_1', '_2') if a file with the same name already exists.
+    """
+    path_object = Path(file_path)
+    if not path_object.exists():
+        return str(path_object)
+
+    stem = path_object.stem
+    extension = path_object.suffix
+    counter = 1
+
+    # Loop until an available name is found
+    while True:
+        new_name = f"{stem}_{counter:0{digits}}{extension}"
+        new_path = path_object.with_name(new_name)
+
+        if not new_path.exists():
+            return str(new_path)
+
+        counter += 1
+
         sys.exit(1)
     if k > 31:
         print("Error: k must be less than 32")
