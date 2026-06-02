@@ -26,7 +26,7 @@ def minmax_rgb(i, w, h, m):
         x+=1 
     return i
     
-def pixelize(i, s, pix_h):
+def pixelize(i, pix_w, pix_h):
     i_h, i_w = i.shape[:2]
     # shrink image
     i = cv.resize(i, (pix_w, pix_h), interpolation=cv.INTER_CUBIC)
