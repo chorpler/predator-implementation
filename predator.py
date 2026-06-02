@@ -152,8 +152,26 @@ if len(sys.argv) > 4: # third argument should be min or max
     if mode != 'min' and mode != 'max':
         print("Error: third flag must be \"min\" or \"max\"")
         sys.exit(1)
-if len(sys.argv) > 5: # last arg should be the amount of pixelization
-    shrinkage = int(sys.argv[5])
+
+    # Old code, to be removed if new code works
+    #
+    # if len(sys.argv) > 2: # if we have a second arg, it should be k
+    #     k_value = int(sys.argv[2])
+    #     if k_value%2 == 0:
+    #         print("Error: k must be odd.")
+    #         sys.exit(1)
+    #     if k_value > 31:
+    #         print("Error: k must be less than 32")
+    #         sys.exit(1)
+    # if len(sys.argv) > 3:
+    #     scale = int(sys.argv[3])
+    # if len(sys.argv) > 4: # third argument should be min or max
+    #     mode = sys.argv[4]
+    #     if mode != 'min' and mode != 'max':
+    #         print("Error: third flag must be \"min\" or \"max\"")
+    #         sys.exit(1)
+    # if len(sys.argv) > 5: # last arg should be the amount of pixelization
+    #     shrinkage = int(sys.argv[5])
 
 pix_w, pix_h = (int(wid/shrinkage), int(hig/shrinkage))
 j = minmax_rgb(i, wid, hig, mode)
