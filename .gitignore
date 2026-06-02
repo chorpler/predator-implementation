@@ -1,0 +1,42 @@
+#############
+## Python
+#############
+*.py[cod]
+venv/
+.venv/
+
+# Translations
+*.mo
+
+# Emacs autosave files
+\#*#
+*~
+
+# Windows batch files
+*.bat
+
+# usually perl -pi.back -e edits.
+*.back
+*.bak
+
+# pycharm project specific settings files
+.idea
+
+# vscode project specific settings file
+.vscode
+.history
+
+# macOS
+.DS_Store
+
+*Thumbs.db
+output
+build
+dist
+
+# Images
+/*.png
+/*.jpg
+/*.jpeg
+/*.gif
+/*.bmp
