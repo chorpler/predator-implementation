@@ -55,6 +55,10 @@ def sobel(i, k, s):
     sobtot = cv.addWeighted(abSobx, 0.5, abSoby, 0.5, 0)
     return sobtot
 
+def blur_image(image_data, block_size: int = 3, sigma_x: float  = 0):
+    blurred = cv.GaussianBlur(image_data, (block_size, block_size), sigma_x)
+    return blurred
+
 
 # def thermalize(input_file, output_file, k=3, scale=1, mode="min", shrinkage=3, auto_output=False, debug=False):
 def add_image_metadata(input_file: str, image_data, val_k: int, val_scale: int, val_mode: str, val_shrinkage: int):
@@ -141,8 +145,9 @@ def get_unique_filename(file_path: str, digits: int = 3) -> str:
 @click.option('--mode', '-m', is_flag=False, type=str, default="min", help='select the minimum or maximum RGB value for each pixel (default: min)')
 @click.option('--shrinkage', '-S', is_flag=False, type=int, default=3, help='shrinkage, the amount of pixelization averaging. Value of 3 means 3x3 area. (default: 3)')
 @click.option('--auto_output', '-a', is_flag=True, default=False, help='output a file with an auto-generated name (default: false)')
+@click.option('--blur', '-b', is_flag=True, default=False, help='blur output instead of pixelizing (default: false)')
 @click.option('--debug', '-d', is_flag=True, help='Turn on debug output (deafult: false)')
-def thermalize(input_file, output_file, k=3, scale=1, mode="min", shrinkage=3, auto_output=False, debug=False):
+def thermalize(input_file, output_file, k=3, scale=1, mode="min", shrinkage=3, auto_output=False, blur=False, debug=False):
     """
     Implements the GIMP 2.10.x "Predator" filter but using python's opencv library.
     # Basic steps:
@@ -216,8 +221,13 @@ def thermalize(input_file, output_file, k=3, scale=1, mode="min", shrinkage=3, a
     print(f"Pixel width and height: ({pix_w}, {pix_h})", file=sys.stderr)
 
     j = minmax_rgb(i, wid, hig, mode)
-    i = pixelize(j, pix_w, pix_h)
-    img_out = sobel(i, k, scale)
+    if blur:
+        # i = pixelize(j, pix_w, pix_h)
+        img_tmp = sobel(j, k, scale)
+        img_out = blur_image(img_tmp, shrinkage, 3)
+    else:
+        i = pixelize(j, pix_w, pix_h)
+        img_out = sobel(i, k, scale)
     pil_img, png_data = add_image_metadata(input_file, img_out, k, scale, mode, shrinkage)
     save_and_preview(img_out, pil_img, png_data, output_filename)
 
