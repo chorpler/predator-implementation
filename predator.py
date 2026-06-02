@@ -131,16 +131,64 @@ def get_unique_filename(file_path: str, digits: int = 3) -> str:
 
         counter += 1
 
+
+@click.command(context_settings=dict(help_option_names=['-h', '--help']))
+@click.argument('input_file', required=True)
+@click.argument('output_file', required=False)
+@click.option('--k', '-k', is_flag=False, type=int, default=3, help='k-value needed by the sobel transformation. A higher value results in thicker edges. Must be odd and less than 32 (default: 3)')
+@click.option('--scale', '-s', is_flag=False, type=int, default=1, help='scale value used in the sobel transformation. A higher value results in brighter edges (default: 1)')
+@click.option('--mode', '-m', is_flag=False, type=str, default="min", help='select the minimum or maximum RGB value for each pixel (default: min)')
+@click.option('--shrinkage', '-S', is_flag=False, type=int, default=3, help='shrinkage, the amount of pixelization averaging. Value of 3 means 3x3 area. (default: 3)')
+@click.option('--auto_output', '-a', is_flag=True, default=False, help='output a file with an auto-generated name (default: false)')
+@click.option('--debug', '-d', is_flag=True, help='Turn on debug output (deafult: false)')
+def thermalize(input_file, output_file, k=3, scale=1, mode="min", shrinkage=3, auto_output=False, debug=False):
+    """
+    Implements the GIMP 2.10.x "Predator" filter but using python's opencv library.
+    # Basic steps:
+    1. "pixelize" (average pixels in an X by X area, the size of which is defined by the user)
+    2. "min/max RGB" (finds the smallest or largest of the R, G, B values and set the others to zero)
+    3. sobel edge-detect
+
+    # Parameters:
+    1. k-value - the k-value needed by the sobel transformation. A higher value results in thicker edges. - default of 3
+    2. scale - the scale value used in the sobel transformation. A higher value results in brighter edges. - default of 1
+    3. minmax - "min" or "max", chooses whether to select the minimum or maximum RGB value for each pixel - default of "min"
+    4. shrinkage - the X of the pixelize step's X by X averaging area - default of 3
+    """
+
+    ctx = click.get_current_context()
+    if not ntpath.exists(input_file):
+        print(f"Could not find input file: '{input_file}'", file=sys.stderr)
+        sys.exit(1)
+    if mode != 'min' and mode != 'max':
+        print(f"Error: mode must be \"min\" or \"max\". Invalid value: '{mode}'", file=sys.stderr)
+        sys.exit(1)
+    if k % 2 == 0:
+        print("Error: k value must be odd", file=sys.stderr)
         sys.exit(1)
     if k > 31:
-        print("Error: k must be less than 32")
+        print("Error: k value must be less than 32", file=sys.stderr)
         sys.exit(1)
-if len(sys.argv) > 3:
-    scale = int(sys.argv[3])
-if len(sys.argv) > 4: # third argument should be min or max
-    mode = sys.argv[4]
-    if mode != 'min' and mode != 'max':
-        print("Error: third flag must be \"min\" or \"max\"")
+
+    output_filename = output_file
+    if output_file:
+        # If output file was specified, make it unique if necessary
+        output_filename = get_unique_filename(output_file)
+    elif auto_output:
+        # If auto-output is enabled, generate a unique filename based on input filename
+        generated_output_filename = f"{Path(input_file).stem}.output{Path(input_file).suffix}"
+        output_filename = get_unique_filename(generated_output_filename)
+    else:
+        # No output requested, so don't generate an output filenam
+        output_filename = None
+
+    # check if input file is a valid image
+    try:
+       i = cv.imread(input_file)
+       print(f"Image info: {i.shape}", file=sys.stderr)
+       hig, wid, _ = i.shape
+    except Exception as e:
+        print(f"Error: image '{input_file}' not valid:\n{e}", file=sys.stderr)
         sys.exit(1)
 
     # Old code, to be removed if new code works
@@ -167,3 +215,13 @@ pix_w, pix_h = (int(wid/shrinkage), int(hig/shrinkage))
 j = minmax_rgb(i, wid, hig, mode)
 i = pixelize(j, pix_w, pix_h)
 sobel(i, k, scale)
+    pix_w, pix_h = (int(wid/shrinkage), int(hig/shrinkage))
+    print(f"Pixel width and height: ({pix_w}, {pix_h})", file=sys.stderr)
+
+    j = minmax_rgb(i, wid, hig, mode)
+    i = pixelize(j, pix_w, pix_h)
+    img_out = sobel(i, k, scale)
+    save_and_preview(img_out, pil_img, png_data, output_filename)
+
+if __name__ == '__main__':
+    thermalize()
