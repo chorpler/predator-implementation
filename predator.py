@@ -8,7 +8,8 @@ import traceback
 import click
 import numpy as np
 import cv2 as cv
-import sys
+from PIL import Image
+from PIL.PngImagePlugin import PngInfo
 
 def minmax_rgb(i, w, h, m):
     x = 0
@@ -211,16 +212,13 @@ def thermalize(input_file, output_file, k=3, scale=1, mode="min", shrinkage=3, a
     # if len(sys.argv) > 5: # last arg should be the amount of pixelization
     #     shrinkage = int(sys.argv[5])
 
-pix_w, pix_h = (int(wid/shrinkage), int(hig/shrinkage))
-j = minmax_rgb(i, wid, hig, mode)
-i = pixelize(j, pix_w, pix_h)
-sobel(i, k, scale)
     pix_w, pix_h = (int(wid/shrinkage), int(hig/shrinkage))
     print(f"Pixel width and height: ({pix_w}, {pix_h})", file=sys.stderr)
 
     j = minmax_rgb(i, wid, hig, mode)
     i = pixelize(j, pix_w, pix_h)
     img_out = sobel(i, k, scale)
+    pil_img, png_data = add_image_metadata(input_file, img_out, k, scale, mode, shrinkage)
     save_and_preview(img_out, pil_img, png_data, output_filename)
 
 if __name__ == '__main__':
