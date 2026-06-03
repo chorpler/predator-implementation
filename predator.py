@@ -121,9 +121,11 @@ def get_unique_filename(file_path: str, digits: int = 3) -> str:
     (e.g., '_1', '_2') if a file with the same name already exists.
     """
     path_object = Path(file_path)
+    logdebug(f"Looking for unique output file path for: {path_object}")
     if not path_object.exists():
         return str(path_object)
 
+    file_dir = path_object.parent
     stem = path_object.stem
     extension = path_object.suffix
     counter = 1
@@ -134,6 +136,7 @@ def get_unique_filename(file_path: str, digits: int = 3) -> str:
         new_path = path_object.with_name(new_name)
 
         if not new_path.exists():
+            logdebug(f"Got unique file path: {new_path}")
             return str(new_path)
 
         counter += 1
@@ -166,8 +169,9 @@ def thermalize(input_file, output_file, k=3, scale=1, mode="min", shrinkage=3, a
 
     ctx = click.get_current_context()
     LOG_VARS['debug'] = debug
-    if not ntpath.exists(input_file):
-        logerror(f"Could not find input file: '{input_file}'")
+    input_file_path = Path(input_file).resolve()
+    if not ntpath.exists(str(input_file_path)):
+        logerror(f"Could not find input file: '{str(input_file_path)}'")
         sys.exit(1)
     if mode != 'min' and mode != 'max':
         logerror(f"mode must be \"min\" or \"max\". Invalid value: '{mode}'")
@@ -176,21 +180,28 @@ def thermalize(input_file, output_file, k=3, scale=1, mode="min", shrinkage=3, a
         logerror("k value must be odd number between 1 and 31 (inclusive)")
         sys.exit(1)
 
-    input_file_path = Path(input_file)
     output_filename = output_file
     input_file_stem = input_file_path.stem
     input_file_type = input_file_path.suffix[1:]
 
     if input_file_type != "png":
-        logerror(f"Input file '{input_file}' is not a png image")
+        logerror(f"Input file '{str(input_file_path)}' is not a png image")
+        sys.exit(1)
 
+    logdebug(f"Found valid input file: '{str(input_file_path)}'")
+    input_file_abs = input_file_path.resolve()
+    input_file_dir = input_file_abs.parent
     if output_file:
         # If output file was specified, make it unique if necessary
+        logdebug(f"Output file specified: '{output_file}'")
         output_filename = get_unique_filename(output_file)
     elif auto_output:
         # If auto-output is enabled, generate a unique filename based on input filename
         generated_output_filename = f"{input_file_stem}.output.{input_file_type}"
-        output_filename = get_unique_filename(generated_output_filename)
+        generated_output_file_path = Path.joinpath(input_file_dir, Path(generated_output_filename)).resolve()
+        logdebug(f"Output file automatic, initial filename: '{generated_output_file_path}'")
+        # output_filename = get_unique_filename(generated_output_filename)
+        output_filename = get_unique_filename(str(generated_output_file_path.resolve()))
     else:
         # No output requested, so don't generate an output filenam
         output_filename = None
