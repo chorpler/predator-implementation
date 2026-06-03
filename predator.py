@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 import ntpath
 from pathlib import Path
 import sys
