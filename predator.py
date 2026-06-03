@@ -193,8 +193,9 @@ def thermalize(input_file, output_file, k=3, scale=1, mode="min", shrinkage=3, a
     input_file_dir = input_file_abs.parent
     if output_file:
         # If output file was specified, make it unique if necessary
-        logdebug(f"Output file specified: '{output_file}'")
-        output_filename = get_unique_filename(output_file)
+        output_path = Path(output_file).resolve()
+        logdebug(f"Output file specified: '{output_path}'")
+        output_filename = get_unique_filename(str(output_path))
     elif auto_output:
         # If auto-output is enabled, generate a unique filename based on input filename
         generated_output_filename = f"{input_file_stem}.output.{input_file_type}"
