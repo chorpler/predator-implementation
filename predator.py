@@ -13,6 +13,43 @@ from PIL.PngImagePlugin import PngInfo
 
 from log import logerror, logdebug, LOG_VARS
 
+
+def predator_color_map(cv_image_data, block_size: int = 5, sigma_x: float  = 0):
+
+    # # Initialize webcam stream (0 is usually the built-in default camera)
+    # cap = cv2.VideoCapture(0)
+    #
+    # if not cap.isOpened():
+    #     print("Error: Could not open webcam.")
+    #     exit()
+    #
+    # print("Press 'q' to exit the thermal vision simulation.")
+    #
+    # while True:
+    #     # Capture frame-by-frame
+    #     ret, frame = cap.read()
+    #     if not ret:
+    #         break
+
+
+    # Step 1: Optional - Add a slight blur to smooth out pixel noise
+    blurred = cv.GaussianBlur(cv_image_data, (block_size, block_size), sigma_x)
+
+    # Step 2: Convert the image to grayscale
+    # Brightness will map directly to perceived "temperature"
+    gray = cv.cvtColor(blurred, cv.COLOR_BGR2GRAY)
+
+    # Step 3: Apply an OpenCV color map to simulate thermal coloring
+    # COLORMAP_JET gives the classic blue-green-yellow-red look
+    # ALTERNATIVES: cv2.COLORMAP_INFERNO, cv2.COLORMAP_PLASMA, cv2.COLORMAP_HOT
+    thermal_effect = cv.applyColorMap(gray, cv.COLOR_IMAGE_MAPS if hasattr(cv, 'COLOR_IMAGE_MAPS') else cv.COLORMAP_JET)
+    # thermal_effect = cv.applyColorMap(gray, cv.COLOR_IMAGE_MAPS if hasattr(cv, 'COLOR_IMAGE_MAPS') else cv.COLORMAP_INFERNO)
+    # thermal_effect = cv.applyColorMap(gray, cv.COLOR_IMAGE_MAPS if hasattr(cv, 'COLOR_IMAGE_MAPS') else cv.COLORMAP_PLASMA)
+    # thermal_effect = cv.applyColorMap(gray, cv.COLOR_IMAGE_MAPS if hasattr(cv, 'COLOR_IMAGE_MAPS') else cv.COLORMAP_HOT)
+
+    return thermal_effect
+
+
 def minmax_rgb(i, w, h, m):
     x = 0
     minmax = 0
@@ -151,8 +188,9 @@ def get_unique_filename(file_path: str, digits: int = 3) -> str:
 @click.option('--shrinkage', '-S', is_flag=False, type=int, default=3, help='shrinkage, the amount of pixelization averaging. Value of 3 means 3x3 area. (default: 3)')
 @click.option('--auto_output', '-a', is_flag=True, default=False, help='output a file with an auto-generated name (default: false)')
 @click.option('--blur', '-b', is_flag=True, default=False, help='blur output instead of pixelizing (default: false)')
+@click.option('--colormap', '-c', is_flag=True, default=False, help='map gradient colors directly instead of normal method (default: false)')
 @click.option('--debug', '-d', is_flag=True, help='Turn on debug output (deafult: false)')
-def thermalize(input_file, output_file, k=3, scale=1, mode="min", shrinkage=3, auto_output=False, blur=False, debug=False):
+def thermalize(input_file, output_file, k=3, scale=1, mode="min", shrinkage=3, auto_output=False, blur=False, colormap=False, debug=False):
     """
     Implements the GIMP 2.10.x "Predator" filter but using python's opencv library.
     # Basic steps:
@@ -235,6 +273,12 @@ def thermalize(input_file, output_file, k=3, scale=1, mode="min", shrinkage=3, a
     #         sys.exit(1)
     # if len(sys.argv) > 5: # last arg should be the amount of pixelization
     #     shrinkage = int(sys.argv[5])
+
+    if colormap:
+        img_out = predator_color_map(i, block_size=shrinkage)
+        pil_img, png_data = add_image_metadata(input_file, img_out, k, scale, mode, shrinkage)
+        save_and_preview(img_out, pil_img, png_data, output_filename)
+        sys.exit(0)
 
     pix_w, pix_h = (int(wid/shrinkage), int(hig/shrinkage))
     logdebug(f"Pixel width and height: ({pix_w}, {pix_h})")
