@@ -143,11 +143,14 @@ def save_and_preview(cv_data, pil_data, png_metadata, unique_output_file):
     if unique_output_file:
         pil_data.save(unique_output_file, pnginfo=png_metadata)
         # cv.imwrite(unique_output_file, sobtot_output)
-    show_preview(cv_data)
+    show_preview(cv_data, unique_output_file)
 
 
-def show_preview(sobtot_output):
-    cv.imshow(f"Preview", sobtot_output)
+def show_preview(sobtot_output, file_path: str):
+    window_title = file_path
+    if not file_path:
+        window_title = "Preview"
+    cv.imshow(f"{window_title}", sobtot_output)
     cv.waitKey(0)
     cv.destroyAllWindows()
 
