@@ -96,7 +96,7 @@ def add_image_metadata(input_file: str, image_data, val_k: int, val_scale: int, 
     #         image_with_exif = piexif.insert(exif_bytes, encoded_img.tobytes())
     #         return image_with_exif
     except Exception as e:
-        print(f"add_image_metadata error while saving metadata: {e}\n{traceback.format_exc()}", file=sys.stderr)
+        logerror(f"Problem while saving metadata: {e}\n{traceback.format_exc()}")
         sys.exit(1)
 
 
@@ -170,22 +170,26 @@ def thermalize(input_file, output_file, k=3, scale=1, mode="min", shrinkage=3, a
         logerror(f"Could not find input file: '{input_file}'")
         sys.exit(1)
     if mode != 'min' and mode != 'max':
-        logerror(f"Error: mode must be \"min\" or \"max\". Invalid value: '{mode}'")
+        logerror(f"mode must be \"min\" or \"max\". Invalid value: '{mode}'")
         sys.exit(1)
-    if k % 2 == 0:
-        logerror("Error: k value must be odd")
-        sys.exit(1)
-    if k > 31:
-        logerror("Error: k value must be less than 32")
+    if k % 2 == 0 or k > 31 or k < 1:
+        logerror("k value must be odd number between 1 and 31 (inclusive)")
         sys.exit(1)
 
+    input_file_path = Path(input_file)
     output_filename = output_file
+    input_file_stem = input_file_path.stem
+    input_file_type = input_file_path.suffix[1:]
+
+    if input_file_type != "png":
+        logerror(f"Input file '{input_file}' is not a png image")
+
     if output_file:
         # If output file was specified, make it unique if necessary
         output_filename = get_unique_filename(output_file)
     elif auto_output:
         # If auto-output is enabled, generate a unique filename based on input filename
-        generated_output_filename = f"{Path(input_file).stem}.output{Path(input_file).suffix}"
+        generated_output_filename = f"{input_file_stem}.output.{input_file_type}"
         output_filename = get_unique_filename(generated_output_filename)
     else:
         # No output requested, so don't generate an output filenam
@@ -197,7 +201,7 @@ def thermalize(input_file, output_file, k=3, scale=1, mode="min", shrinkage=3, a
        logdebug(f"Image info: {i.shape}")
        hig, wid, _ = i.shape
     except Exception as e:
-        logerror(f"Error: image '{input_file}' not valid: {e}")
+        logerror(f"image '{input_file}' not valid: {e}")
         sys.exit(1)
 
     # Old code, to be removed if new code works
