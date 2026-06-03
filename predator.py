@@ -11,6 +11,8 @@ import cv2 as cv
 from PIL import Image
 from PIL.PngImagePlugin import PngInfo
 
+from log import logerror, logdebug, LOG_VARS
+
 def minmax_rgb(i, w, h, m):
     x = 0
     minmax = 0
@@ -163,17 +165,18 @@ def thermalize(input_file, output_file, k=3, scale=1, mode="min", shrinkage=3, a
     """
 
     ctx = click.get_current_context()
+    LOG_VARS['debug'] = debug
     if not ntpath.exists(input_file):
-        print(f"Could not find input file: '{input_file}'", file=sys.stderr)
+        logerror(f"Could not find input file: '{input_file}'")
         sys.exit(1)
     if mode != 'min' and mode != 'max':
-        print(f"Error: mode must be \"min\" or \"max\". Invalid value: '{mode}'", file=sys.stderr)
+        logerror(f"Error: mode must be \"min\" or \"max\". Invalid value: '{mode}'")
         sys.exit(1)
     if k % 2 == 0:
-        print("Error: k value must be odd", file=sys.stderr)
+        logerror("Error: k value must be odd")
         sys.exit(1)
     if k > 31:
-        print("Error: k value must be less than 32", file=sys.stderr)
+        logerror("Error: k value must be less than 32")
         sys.exit(1)
 
     output_filename = output_file
@@ -191,10 +194,10 @@ def thermalize(input_file, output_file, k=3, scale=1, mode="min", shrinkage=3, a
     # check if input file is a valid image
     try:
        i = cv.imread(input_file)
-       print(f"Image info: {i.shape}", file=sys.stderr)
+       logdebug(f"Image info: {i.shape}")
        hig, wid, _ = i.shape
     except Exception as e:
-        print(f"Error: image '{input_file}' not valid:\n{e}", file=sys.stderr)
+        logerror(f"Error: image '{input_file}' not valid: {e}")
         sys.exit(1)
 
     # Old code, to be removed if new code works
@@ -218,7 +221,7 @@ def thermalize(input_file, output_file, k=3, scale=1, mode="min", shrinkage=3, a
     #     shrinkage = int(sys.argv[5])
 
     pix_w, pix_h = (int(wid/shrinkage), int(hig/shrinkage))
-    print(f"Pixel width and height: ({pix_w}, {pix_h})", file=sys.stderr)
+    logdebug(f"Pixel width and height: ({pix_w}, {pix_h})")
 
     j = minmax_rgb(i, wid, hig, mode)
     if blur:

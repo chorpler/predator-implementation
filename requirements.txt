@@ -1,4 +1,6 @@
 click
+colorama
+termcolor
 numpy
 opencv-python
 pillow
